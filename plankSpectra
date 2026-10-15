@@ -1,0 +1,18 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import integrate
+from scipy.optimize import brentq
+
+# Constants
+
+h = 6.62607015e-34
+c = 2.99792458e8
+kB = 1.380649e-23
+
+def spec_rad_F(f, T):
+    k = (2 * h * f**3) / (c**2)
+    return k * (1 / (np.exp((h * f)/(kB * T))-1))
+
+def wav_to_frequency(w):
+    return c / w
+
