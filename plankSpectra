@@ -9,10 +9,19 @@ h = 6.62607015e-34
 c = 2.99792458e8
 kB = 1.380649e-23
 
+# Earth and Sun Values
+
+R_sun = 6.957e8 
+D = 149597870700 
+albedo = 0.296
+
 def spec_rad_F(f, T):
     k = (2 * h * f**3) / (c**2)
     return k * (1 / (np.exp((h * f)/(kB * T))-1))
 
 def wav_to_frequency(w):
     return c / w
+
+def irradiance_E(f, T):
+    return np.pi * (R_sun / D)**2 * spec_rad_F(f, T)
 
