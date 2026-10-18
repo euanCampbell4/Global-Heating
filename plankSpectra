@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import integrate
-from scipy.optimize import brentq
+import pandas as pd
 
 # Constants
 
@@ -15,6 +14,7 @@ R_sun = 6.957e8
 D = 149597870700 
 albedo = 0.296
 
+
 def spec_rad_F(f, T):
     k = (2 * h * f**3) / (c**2)
     return k * (1 / (np.exp((h * f)/(kB * T))-1))
@@ -25,3 +25,15 @@ def wav_to_frequency(w):
 def irradiance_E(f, T):
     return np.pi * (R_sun / D)**2 * spec_rad_F(f, T)
 
+E490_FILE = "e490_00a_amo.csv"
+
+df = pd.read_csv("e490_00a_amo.csv", usecols=[0, 1], header=0)
+df.columns = ["wavelength_um", "irradiance"]
+df = df.apply(pd.to_numeric, errors="coerce").dropna()
+
+plt.plot(df["wavelength_um"], df["irradiance"])
+plt.xlim(0, 3)
+plt.xlabel("Wavelength (µm)")
+plt.ylabel("Irradiance (W m$^{-2}$ µm$^{-1}$)")
+plt.title("ASTM E490 solar reference spectrum")
+plt.show()
