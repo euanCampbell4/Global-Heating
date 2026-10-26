@@ -14,6 +14,7 @@ R_sun = 6.957e8
 D = 149597870700 
 albedo = 0.296
 
+# Equations irradiance
 
 def spec_rad_F(f, T):
     k = (2 * h * f**3) / (c**2)
@@ -24,6 +25,7 @@ def wav_to_frequency(w):
 
 def irradiance_E(f, T):
     return np.pi * (R_sun / D)**2 * spec_rad_F(f, T)
+
 
 E490_FILE = "e490_00a_amo.csv"
 
