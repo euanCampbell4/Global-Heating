@@ -27,13 +27,13 @@ def irradiance_E(f, T):
 
 E490_FILE = "e490_00a_amo.csv"
 
+#read file with two columns, errors"c
 df = pd.read_csv("e490_00a_amo.csv", usecols=[0, 1], header=0)
 df.columns = ["wavelength_um", "irradiance"]
-df = df.apply(pd.to_numeric, errors="coerce").dropna()
 
 plt.plot(df["wavelength_um"], df["irradiance"])
 plt.xlim(0, 3)
 plt.xlabel("Wavelength (µm)")
 plt.ylabel("Irradiance (W m$^{-2}$ µm$^{-1}$)")
-plt.title("ASTM E490 solar reference spectrum")
+plt.title("E490 spectrum")
 plt.show()
