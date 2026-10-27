@@ -13,6 +13,7 @@ kB = 1.380649e-23
 R_sun = 6.957e8 
 D = 149597870700 
 albedo = 0.296
+T_sun = input("Enter Temperature:")
 
 # Equations irradiance
 
@@ -20,18 +21,30 @@ def spec_rad_F(f, T):
     k = (2 * h * f**3) / (c**2)
     return k * (1 / (np.exp((h * f)/(kB * T))-1))
 
-def wav_to_frequency(w):
-    return c / w
-
 def irradiance_E(f, T):
     return np.pi * (R_sun / D)**2 * spec_rad_F(f, T)
+
+#Frequency Values
+f = np.logspace(11, 15.5, 20000)
+lam = c / f  
+
+#Energy Balance
+
+def absorbed(S):
+    return (1 - albedo) * S / 4
+
+def emitted(T):
+    return np.pi #* trap(planck_nu(f, T), f)
+
+
+
 
 
 E490_FILE = "e490_00a_amo.csv"
 
 #read file with two columns, errors"c
 df = pd.read_csv("e490_00a_amo.csv", usecols=[0, 1], header=0)
-df.columns = ["wavelength_um", "irradiance"]
+df.columns = ["wavelength_um", "irradiance"].dropna()
 
 plt.plot(df["wavelength_um"], df["irradiance"])
 plt.xlim(0, 3)
