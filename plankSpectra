@@ -60,7 +60,7 @@ for i in range(200):
     if abs(diff) < 1e-6:      
         break
 
-    if diff > 0:       b         #
+    if diff > 0:               #
         T = T + step
     else:                       #
         T = T - step
