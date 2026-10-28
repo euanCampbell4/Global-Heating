@@ -21,30 +21,100 @@ def spec_rad_F(f, T):
     k = (2 * h * f**3) / (c**2)
     return k * (1 / (np.exp((h * f)/(kB * T))-1))
 
-def irradiance_E(f, T):
+def irradiance_E(f, T=T_sun):
     return np.pi * (R_sun / D)**2 * spec_rad_F(f, T)
+
+
 
 #Frequency Values
 f = np.logspace(11, 15.5, 20000)
+
+#Converting Units
 lam = c / f  
+def to_per_um(I_nu):
+    return I_nu * (c / lam**2) * 1e-6
 
 #Energy Balance
 
-def absorbed(S):
+def absorbed_power(S):
     return (1 - albedo) * S / 4
 
-def emitted(T):
-    return np.pi #* trap(planck_nu(f, T), f)
+def emitted_power(T):             
+    flux = np.pi * spec_rad_F(f, T)                 
+    return np.trapezoid(flux, f)
+
+def imbalance(T):
+    return absorbed_power(T) - emitted_power(T)
 
 
+S_planck = np.trapezoid(irradiance_E(f), f)
 
+#Adjust Temperature to find T
 
+T = 200.0         
+step = 10.0        
+
+for i in range(200):
+    diff = absorbed_power - emitted_power(T)
+
+    if abs(diff) < 1e-6:      
+        break
+
+    if diff > 0:       b         #
+        T = T + step
+    else:                       #
+        T = T - step
+        step = step / 2         
+
+print("T_earth:", T)
+
+T_earth = T
 
 E490_FILE = "e490_00a_amo.csv"
-
-#read file with two columns, errors"c
 df = pd.read_csv("e490_00a_amo.csv", usecols=[0, 1], header=0)
 df.columns = ["wavelength_um", "irradiance"].dropna()
+
+I_sun = irradiance_E(f)
+I_earth = np.pi * spec_rad_F(f, T_earth)
+I_sun_lam = to_per_um(I_sun, lam)
+I_earth_lam = to_per_um(I_earth, lam)
+
+fig, ax = plt.subplots(2, 2, figsize=(12, 8))
+
+for row in range(2):               # row 0 = linear, row 1 = log-log
+    a = ax[row, 0]                 # frequency column
+    b = ax[row, 1]                 # wavelength column
+
+    a.plot(f / 1e12, I_sun_nu, label="Sun (Planck)")
+    a.plot(f / 1e12, I_earth_nu, label="Earth (Planck)")
+    a.set_xlabel("Frequency (THz)")
+    a.set_ylabel(r"W m$^{-2}$ Hz$^{-1}$")
+
+    b.plot(lam * 1e6, I_sun_lam, label="Sun (Planck)")
+    b.plot(lam * 1e6, I_earth_lam, label="Earth (Planck)")
+    b.plot(e490["wavelength_um"], e490["irradiance"], label="E490", alpha=0.7)
+    b.set_xlabel(r"Wavelength ($\mu$m)")
+    b.set_ylabel(r"W m$^{-2}$ $\mu$m$^{-1}$")
+
+    if row == 0:
+        a.set_xlim(0, 3000)
+        b.set_xlim(0, 3)
+    else:
+        for axis in (a, b):
+            axis.set_xscale("log")
+            axis.set_yscale("log")
+        a.set_ylim(1e-20, 1e-9)
+        b.set_ylim(1e-6, 1e4)
+
+    a.legend()
+    b.legend()
+
+plt.tight_layout()
+plt.show()
+
+
+#read file with two columns, errors"c
+
 
 plt.plot(df["wavelength_um"], df["irradiance"])
 plt.xlim(0, 3)
