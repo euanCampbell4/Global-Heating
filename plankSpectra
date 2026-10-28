@@ -84,13 +84,13 @@ for row in range(2):               # row 0 = linear, row 1 = log-log
     a = ax[row, 0]                 # frequency column
     b = ax[row, 1]                 # wavelength column
 
-    a.plot(f / 1e12, I_sun, label="Sun (Planck)")
-    a.plot(f / 1e12, I_earth, label="Earth (Planck)")
+    a.plot(f / 1e12, I_sun, label="Sun")
+    a.plot(f / 1e12, I_earth, label="Earth")
     a.set_xlabel("Frequency (THz)")
     a.set_ylabel(r"W m$^{-2}$ Hz$^{-1}$")
 
-    b.plot(lam * 1e6, I_sun_lam, label="Sun (Planck)")
-    b.plot(lam * 1e6, I_earth_lam, label="Earth (Planck)")
+    b.plot(lam * 1e6, I_sun_lam, label="Sun")
+    b.plot(lam * 1e6, I_earth_lam, label="Earth")
     b.plot(e490["wavelength_um"], e490["irradiance"], label="E490", alpha=0.7)
     b.set_xlabel(r"Wavelength ($\mu$m)")
     b.set_ylabel(r"W m$^{-2}$ $\mu$m$^{-1}$")
@@ -111,25 +111,9 @@ for row in range(2):               # row 0 = linear, row 1 = log-log
 plt.tight_layout()
 plt.show()
 
-S_planck = np.trapezoid(irradiance_E(f), f)
 S_e490 = np.trapezoid(e490["irradiance"], e490["wavelength_um"])
 S_out = emitted_power(T_earth)
 
-# Jacobian check: wavelength-space area should equal frequency-space area
-# (abs because wavelength decreases as frequency increases)
-S_planck_lam = abs(np.integrate(I_sun_lam, lam * 1e6))
-
-print(f"Incoming, Planck Sun:  {S_planck:.1f} W/m^2")
-print(f"Incoming, E490:        {S_e490:.1f} W/m^2")
-print(f"Outgoing, Earth Planck:{S_out:.1f} W/m^2")
-print(f"Jacobian check:        {S_planck_lam:.1f} W/m^2 (should match Planck Sun)")
-
-#read file with two columns, errors"c
-
-
-plt.plot(df["wavelength_um"], df["irradiance"])
-plt.xlim(0, 3)
-plt.xlabel("Wavelength (µm)")
-plt.ylabel("Irradiance (W m$^{-2}$ µm$^{-1}$)")
-plt.title("E490 spectrum")
-plt.show()
+print(f"Incoming, Planck Sun:   {S_planck:.1f} W/m^2")
+print(f"Incoming, E490:         {S_e490:.1f} W/m^2")
+print(f"Outgoing, Earth Planck: {S_out:.1f} W/m^2")
