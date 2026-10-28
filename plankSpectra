@@ -13,7 +13,7 @@ kB = 1.380649e-23
 R_sun = 6.957e8 
 D = 149597870700 
 albedo = 0.296
-T_sun = input("Enter Temperature:")
+T_sun = 5770
 
 # Equations irradiance
 
@@ -43,41 +43,40 @@ def emitted_power(T):
     flux = np.pi * spec_rad_F(f, T)                 
     return np.trapezoid(flux, f)
 
-def imbalance(T):
-    return absorbed_power(T) - emitted_power(T)
-
 
 S_planck = np.trapezoid(irradiance_E(f), f)
 
-#Adjust Temperature to find T
+#FINDING T
 
 T = 200.0         
 step = 10.0        
+absorbed = absorbed_power(S_planck)
 
 for i in range(200):
-    diff = absorbed_power - emitted_power(T)
+    diff = absorbed - emitted_power(T)
 
     if abs(diff) < 1e-6:      
         break
 
-    if diff > 0:               #
+    if diff > 0:               
         T = T + step
-    else:                       #
+    else:                       
         T = T - step
         step = step / 2         
 
 print("T_earth:", T)
-
 T_earth = T
 
-E490_FILE = "e490_00a_amo.csv"
-df = pd.read_csv("e490_00a_amo.csv", usecols=[0, 1], header=0)
-df.columns = ["wavelength_um", "irradiance"].dropna()
+#e490
+
+e490 = pd.read_csv("e490_00a_amo.csv", usecols=[0, 1], header=0)
+e490.columns = ["wavelength_um", "irradiance"]
+e490 = e490.apply(pd.to_numeric, errors="coerce").dropna()
 
 I_sun = irradiance_E(f)
 I_earth = np.pi * spec_rad_F(f, T_earth)
-I_sun_lam = to_per_um(I_sun, lam)
-I_earth_lam = to_per_um(I_earth, lam)
+I_sun_lam = to_per_um(I_sun)
+I_earth_lam = to_per_um(I_earth)
 
 fig, ax = plt.subplots(2, 2, figsize=(12, 8))
 
@@ -85,8 +84,8 @@ for row in range(2):               # row 0 = linear, row 1 = log-log
     a = ax[row, 0]                 # frequency column
     b = ax[row, 1]                 # wavelength column
 
-    a.plot(f / 1e12, I_sun_nu, label="Sun (Planck)")
-    a.plot(f / 1e12, I_earth_nu, label="Earth (Planck)")
+    a.plot(f / 1e12, I_sun, label="Sun (Planck)")
+    a.plot(f / 1e12, I_earth, label="Earth (Planck)")
     a.set_xlabel("Frequency (THz)")
     a.set_ylabel(r"W m$^{-2}$ Hz$^{-1}$")
 
@@ -112,6 +111,18 @@ for row in range(2):               # row 0 = linear, row 1 = log-log
 plt.tight_layout()
 plt.show()
 
+S_planck = np.trapezoid(irradiance_E(f), f)
+S_e490 = np.trapezoid(e490["irradiance"], e490["wavelength_um"])
+S_out = emitted_power(T_earth)
+
+# Jacobian check: wavelength-space area should equal frequency-space area
+# (abs because wavelength decreases as frequency increases)
+S_planck_lam = abs(np.integrate(I_sun_lam, lam * 1e6))
+
+print(f"Incoming, Planck Sun:  {S_planck:.1f} W/m^2")
+print(f"Incoming, E490:        {S_e490:.1f} W/m^2")
+print(f"Outgoing, Earth Planck:{S_out:.1f} W/m^2")
+print(f"Jacobian check:        {S_planck_lam:.1f} W/m^2 (should match Planck Sun)")
 
 #read file with two columns, errors"c
 
