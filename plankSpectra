@@ -24,12 +24,12 @@ def spec_rad_F(f, T):
 def irradiance_E(f, T=T_sun):
     return np.pi * (R_sun / D)**2 * spec_rad_F(f, T)
 
-
-
 #Frequency Values
+
 f = np.logspace(11, 15.5, 20000)
 
 #Converting Units
+
 lam = c / f  
 def to_per_um(I_nu):
     return I_nu * (c / lam**2) * 1e-6
