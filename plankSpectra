@@ -43,10 +43,11 @@ def emitted_power(T):
     flux = np.pi * spec_rad_F(f, T)                 
     return np.trapezoid(flux, f)
 
+#Sum the area under the curve for the incoming Planck prediction
 
 S_planck = np.trapezoid(irradiance_E(f), f)
 
-#FINDING T
+#FINDING T that balances incoming and outgoing
 
 T = 200.0         
 step = 10.0        
@@ -67,7 +68,7 @@ for i in range(200):
 print("T_earth:", T)
 T_earth = T
 
-#e490
+#e490 setup
 
 e490 = pd.read_csv("e490_00a_amo.csv", usecols=[0, 1], header=0)
 e490.columns = ["wavelength_um", "irradiance"]
@@ -78,25 +79,37 @@ I_earth = np.pi * spec_rad_F(f, T_earth)
 I_sun_lam = to_per_um(I_sun)
 I_earth_lam = to_per_um(I_earth)
 
+#Sum the area under the curve for E90, and Emitted Power
+
+S_e490 = np.trapezoid(e490["irradiance"], e490["wavelength_um"])
+S_out = emitted_power(T_earth)
+
+#Plots 4 plots tables
+
 fig, ax = plt.subplots(2, 2, figsize=(12, 8))
 
-for row in range(2):               # row 0 = linear, row 1 = log-log
-    a = ax[row, 0]                 # frequency column
-    b = ax[row, 1]                 # wavelength column
+titles = [["Frequency, linear", "Wavelength, linear"],
+          ["Frequency, log-log", "Wavelength, log-log"]]
 
-    a.plot(f / 1e12, I_sun, label="Sun")
-    a.plot(f / 1e12, I_earth, label="Earth")
+for row in range(2):
+    a = ax[row, 0]
+    b = ax[row, 1]
+    b.plot(e490["wavelength_um"], e490["irradiance"], color="green", lw=1.5, label="E490 Data")
+    a.plot(f / 1e12, I_sun, color="orange", lw=1.5, label="Sun")
+    a.plot(f / 1e12, I_earth, color="tab:blue", lw=1.5, label="Earth")
+    b.plot(lam * 1e6, I_sun_lam, color="orange", lw=1.5, label="Sun")
+    b.plot(lam * 1e6, I_earth_lam, color="tab:blue", lw=1.5, label="Earth")
+   
+
     a.set_xlabel("Frequency (THz)")
-    a.set_ylabel(r"W m$^{-2}$ Hz$^{-1}$")
-
-    b.plot(lam * 1e6, I_sun_lam, label="Sun")
-    b.plot(lam * 1e6, I_earth_lam, label="Earth")
-    b.plot(e490["wavelength_um"], e490["irradiance"], label="E490", alpha=0.7)
-    b.set_xlabel(r"Wavelength ($\mu$m)")
-    b.set_ylabel(r"W m$^{-2}$ $\mu$m$^{-1}$")
+    a.set_ylabel("Iradiation (W m$^{-2}$ Hz$^{-1}$)")
+    b.set_xlabel("Wavelength ($\\mu$m)")
+    b.set_ylabel("Iradiation (W m$^{-2}$ $\\mu$m$^{-1}$)")
+    a.set_title(titles[row][0], fontsize=10)
+    b.set_title(titles[row][1], fontsize=10)
 
     if row == 0:
-        a.set_xlim(0, 3000)
+        a.set_xlim(0, 1500)
         b.set_xlim(0, 3)
     else:
         for axis in (a, b):
@@ -105,15 +118,13 @@ for row in range(2):               # row 0 = linear, row 1 = log-log
         a.set_ylim(1e-20, 1e-9)
         b.set_ylim(1e-6, 1e4)
 
-    a.legend()
-    b.legend()
+    for axis in (a, b):
+        axis.grid(alpha=0.3)
+    a.legend(fontsize=8)
+    b.legend(fontsize=8)
 
-plt.tight_layout()
+plt.tight_layout(rect=[0, 0.12, 1, 1]) 
+plt.figtext(0.5, 0.11, "Sun and Earth Planck spectra with E490 data.",  ha="center")
+plt.figtext(0.5, 0.06," The incoming Planck prediction is " + str(S_planck) + ". The E490 is " + str(S_e490) + ". The outgoing Planck prediction is " + str(S_out) , ha="center")
+plt.figtext(0.5, 0.01, "The predicted temperature is " + str(T_earth),  ha="center")
 plt.show()
-
-S_e490 = np.trapezoid(e490["irradiance"], e490["wavelength_um"])
-S_out = emitted_power(T_earth)
-
-print(f"Incoming, Planck Sun:   {S_planck:.1f} W/m^2")
-print(f"Incoming, E490:         {S_e490:.1f} W/m^2")
-print(f"Outgoing, Earth Planck: {S_out:.1f} W/m^2")
