@@ -175,6 +175,13 @@ ax[1].legend()
 plt.tight_layout()
 plt.show()
 
+#CHANGE TO FREQUENCY
+
+c_cm = 2.99792458e10             # speed of light in cm/s
+
+def to_THz(nu_cm):
+    return nu_cm * c_cm / 1e12   # cm^-1 -> THz
+
 # average over 2 cm^-1 bins (400 grid points each) so we fit the envelope, not single lines
 sigma_bin = sigma_1.reshape(-1, 400).mean(axis=1)
 nu_bin = nu_grid.reshape(-1, 400).mean(axis=1)
@@ -189,17 +196,16 @@ m_l, b_l = np.polyfit(nu_bin[left], np.log(sigma_bin[left]), 1)
 
 plt.figure(figsize=(10, 5))
 
-# Step 4: full-resolution cross-sections
-plt.semilogy(nu_grid, sigma_1, color="tab:red", lw=0.5, alpha=0.6, label="1 atm")
 
-# Step 5: binned envelope and the fitted lines
-plt.semilogy(nu_bin, sigma_bin, "k.", label="binned sigma (1 atm)")
-plt.semilogy(nu_bin[right], np.exp(b_r + m_r * nu_bin[right]), color="orange", lw=2, label="fit, high side")
-plt.semilogy(nu_bin[left], np.exp(b_l + m_l * nu_bin[left]), color="blue", lw=2, label="fit, low side")
+plt.semilogy(to_THz(nu_grid), sigma_1, color="tab:red", lw=0.5, alpha=0.6, label="1 atm")
+plt.semilogy(to_THz(nu_bin), sigma_bin, "k.", label="binned sigma (1 atm)")
+plt.semilogy(to_THz(nu_bin[right]), np.exp(b_r + m_r * nu_bin[right]), color="orange", lw=2, label="fit, high side")
+plt.semilogy(to_THz(nu_bin[left]), np.exp(b_l + m_l * nu_bin[left]), color="blue", lw=2, label="fit, low side")
+plt.semilogy(to_THz(nu_lines), S_lines, ".", color="indigo", ms=3, label="HITRAN S")
 
-plt.xlim(570, 770)
+plt.xlim(to_THz(570), to_THz(770))     # about 17.1 to 23.1 THz
 plt.ylim(1e-24, 1e-17)
-plt.xlabel("Wavenumber (cm$^{-1}$)")
+plt.xlabel("Frequency (THz)")
 plt.ylabel("Cross-section (cm$^2$)")
 plt.legend(fontsize=8)
 plt.grid(alpha=0.3)
