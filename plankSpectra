@@ -140,7 +140,7 @@ gamma_lines = hitran["gamma_air"].values
 plt.figure(figsize=(10, 4))
 plt.vlines(nu_lines, 1e-32, S_lines, lw=0.5)
 plt.yscale("log")
-plt.xlim(450, 850)
+plt.xlim(570, 770)
 plt.ylim(1e-32, S_lines.max() * 3)
 plt.xlabel("Wavenumber (cm$^{-1}$)")
 plt.ylabel("Line strength S (cm$^{-1}$/(molecule cm$^{-2}$))")
@@ -148,7 +148,7 @@ plt.show()
 
 #Lorentzian
 
-nu_grid = np.linspace(450, 850, 80000, endpoint=False)    # step 0.005 cm^-1
+nu_grid = np.linspace(450, 850, 40000, endpoint=False)    # step 0.005 cm^-1
 
 def cross_section(nu_grid, p=1.0):
     #making a grid
@@ -173,4 +173,34 @@ ax[1].set_xlabel("Wavenumber (cm$^{-1}$)")
 ax[1].legend()
 
 plt.tight_layout()
+plt.show()
+
+# average over 2 cm^-1 bins (400 grid points each) so we fit the envelope, not single lines
+sigma_bin = sigma_1.reshape(-1, 400).mean(axis=1)
+nu_bin = nu_grid.reshape(-1, 400).mean(axis=1)
+
+nu_c = 667.4
+
+right = (nu_bin > nu_c + 10) & (nu_bin < 750)
+left = (nu_bin < nu_c - 10) & (nu_bin > 590)
+
+m_r, b_r = np.polyfit(nu_bin[right], np.log(sigma_bin[right]), 1)
+m_l, b_l = np.polyfit(nu_bin[left], np.log(sigma_bin[left]), 1)
+
+plt.figure(figsize=(10, 5))
+
+# Step 4: full-resolution cross-sections
+plt.semilogy(nu_grid, sigma_1, color="tab:red", lw=0.5, alpha=0.6, label="1 atm")
+
+# Step 5: binned envelope and the fitted lines
+plt.semilogy(nu_bin, sigma_bin, "k.", label="binned sigma (1 atm)")
+plt.semilogy(nu_bin[right], np.exp(b_r + m_r * nu_bin[right]), color="orange", lw=2, label="fit, high side")
+plt.semilogy(nu_bin[left], np.exp(b_l + m_l * nu_bin[left]), color="blue", lw=2, label="fit, low side")
+
+plt.xlim(570, 770)
+plt.ylim(1e-24, 1e-17)
+plt.xlabel("Wavenumber (cm$^{-1}$)")
+plt.ylabel("Cross-section (cm$^2$)")
+plt.legend(fontsize=8)
+plt.grid(alpha=0.3)
 plt.show()
