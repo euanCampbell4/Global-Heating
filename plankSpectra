@@ -204,7 +204,7 @@ plt.semilogy(to_THz(nu_bin[left]), np.exp(b_l + m_l * nu_bin[left]), color="blue
 plt.semilogy(to_THz(nu_lines), S_lines, ".", color="indigo", ms=3, label="HITRAN S")
 
 plt.xlim(to_THz(570), to_THz(770))     # about 17.1 to 23.1 THz
-plt.ylim(1e-24, 1e-17)
+plt.ylim(1e-22, 1e-17)
 plt.xlabel("Frequency (THz)")
 plt.ylabel("Cross-section (cm$^2$)")
 plt.legend(fontsize=8)
