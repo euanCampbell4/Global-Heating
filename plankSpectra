@@ -128,3 +128,49 @@ plt.figtext(0.5, 0.11, "Sun and Earth Planck spectra with E490 data.",  ha="cent
 plt.figtext(0.5, 0.06," The incoming Planck prediction is " + str(S_planck) + ". The E490 is " + str(S_e490) + ". The outgoing Planck prediction is " + str(S_out) , ha="center")
 plt.figtext(0.5, 0.01, "The predicted temperature is " + str(T_earth),  ha="center")
 plt.show()
+
+#Plotting HITRAN DATA
+hitran = pd.read_csv("CO2Min.csv", usecols=[0, 1, 2], header=0)
+hitran.columns = ["nu", "S", "gamma_air"]
+
+nu_lines = hitran["nu"].values
+S_lines = hitran["S"].values
+gamma_lines = hitran["gamma_air"].values
+
+plt.figure(figsize=(10, 4))
+plt.vlines(nu_lines, 1e-32, S_lines, lw=0.5)
+plt.yscale("log")
+plt.xlim(450, 850)
+plt.ylim(1e-32, S_lines.max() * 3)
+plt.xlabel("Wavenumber (cm$^{-1}$)")
+plt.ylabel("Line strength S (cm$^{-1}$/(molecule cm$^{-2}$))")
+plt.show()
+
+#Lorentzian
+
+nu_grid = np.linspace(450, 850, 80000, endpoint=False)    # step 0.005 cm^-1
+
+def cross_section(nu_grid, p=1.0):
+    #making a grid
+    sigma = np.zeros_like(nu_grid)
+
+    #Looping Over every line
+    for i in range(len(nu_lines)):
+        gamma = gamma_lines[i] * p
+        sigma += S_lines[i] / np.pi * gamma / (gamma**2 + (nu_grid - nu_lines[i])**2)
+    return sigma
+
+sigma_1 = cross_section(nu_grid, 1)
+
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+ax[0].semilogy(nu_grid, sigma_1)
+ax[0].set_xlabel("Wavenumber (cm$^{-1}$)")
+ax[0].set_ylabel("Cross-section (cm$^2$)")
+
+ax[1].semilogy(nu_grid, sigma_1, label="1 atm")
+ax[1].set_xlim(680, 695)
+ax[1].set_xlabel("Wavenumber (cm$^{-1}$)")
+ax[1].legend()
+
+plt.tight_layout()
+plt.show()
