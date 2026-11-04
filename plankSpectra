@@ -198,7 +198,6 @@ plt.figure(figsize=(10, 5))
 
 
 plt.semilogy(to_THz(nu_grid), sigma_1, color="tab:red", lw=0.5, alpha=0.6, label="1 atm")
-plt.semilogy(to_THz(nu_bin), sigma_bin, "k.", label="binned sigma (1 atm)")
 plt.semilogy(to_THz(nu_bin[right]), np.exp(b_r + m_r * nu_bin[right]), color="orange", lw=2, label="fit, high side")
 plt.semilogy(to_THz(nu_bin[left]), np.exp(b_l + m_l * nu_bin[left]), color="blue", lw=2, label="fit, low side")
 plt.semilogy(to_THz(nu_lines), S_lines, ".", color="indigo", ms=3, label="HITRAN S")
