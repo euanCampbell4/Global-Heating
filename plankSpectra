@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+plt.rcParams["axes.labelsize"] = 12
+
 # Constants
 
 h = 6.62607015e-34
@@ -83,13 +85,13 @@ I_earth_lam = to_per_um(I_earth)
 
 S_e490 = np.trapezoid(e490["irradiance"], e490["wavelength_um"])
 S_out = emitted_power(T_earth)
+lam_e = e490["wavelength_um"].values * 1e-6                 # wavelength in m
+f_e = c / lam_e                                             # matching frequency in Hz
+I_e490_nu = e490["irradiance"].values * 1e6 * lam_e**2 / c  # W m^-2 Hz^-1
 
 #Plots 4 plots tables
 
 fig, ax = plt.subplots(2, 2, figsize=(12, 8))
-
-titles = [["Frequency, linear", "Wavelength, linear"],
-          ["Frequency, log-log", "Wavelength, log-log"]]
 
 for row in range(2):
     a = ax[row, 0]
@@ -97,16 +99,15 @@ for row in range(2):
     b.plot(e490["wavelength_um"], e490["irradiance"], color="green", lw=1.5, label="E490 Data")
     a.plot(f / 1e12, I_sun, color="orange", lw=1.5, label="Sun")
     a.plot(f / 1e12, I_earth, color="tab:blue", lw=1.5, label="Earth")
+    a.plot(f_e / 1e12, I_e490_nu, color="green", lw=1.5, label="E490 Data")
     b.plot(lam * 1e6, I_sun_lam, color="orange", lw=1.5, label="Sun")
     b.plot(lam * 1e6, I_earth_lam, color="tab:blue", lw=1.5, label="Earth")
    
 
     a.set_xlabel("Frequency (THz)")
-    a.set_ylabel("Iradiation (W m$^{-2}$ Hz$^{-1}$)")
+    a.set_ylabel("Irradiance (W m$^{-2}$ Hz$^{-1}$)")
     b.set_xlabel("Wavelength ($\\mu$m)")
-    b.set_ylabel("Iradiation (W m$^{-2}$ $\\mu$m$^{-1}$)")
-    a.set_title(titles[row][0], fontsize=10)
-    b.set_title(titles[row][1], fontsize=10)
+    b.set_ylabel("Irradiance (W m$^{-2}$ $\\mu$m$^{-1}$)")
 
     if row == 0:
         a.set_xlim(0, 1500)
@@ -118,16 +119,16 @@ for row in range(2):
         a.set_ylim(1e-20, 1e-9)
         b.set_ylim(1e-6, 1e4)
 
-    for axis in (a, b):
-        axis.grid(alpha=0.3)
-    a.legend(fontsize=8)
-    b.legend(fontsize=8)
+    a.legend(fontsize=10)
+    b.legend(fontsize=10)
 
 plt.tight_layout(rect=[0, 0.12, 1, 1]) 
 plt.figtext(0.5, 0.11, "Sun and Earth Planck spectra with E490 data.",  ha="center")
 plt.figtext(0.5, 0.06," The incoming Planck prediction is " + str(S_planck) + ". The E490 is " + str(S_e490) + ". The outgoing Planck prediction is " + str(S_out) , ha="center")
 plt.figtext(0.5, 0.01, "The predicted temperature is " + str(T_earth),  ha="center")
 plt.show()
+
+#NUMBER 2
 
 #Plotting HITRAN DATA
 hitran = pd.read_csv("CO2Min.csv", usecols=[0, 1, 2], header=0)
@@ -137,18 +138,9 @@ nu_lines = hitran["nu"].values
 S_lines = hitran["S"].values
 gamma_lines = hitran["gamma_air"].values
 
-plt.figure(figsize=(10, 4))
-plt.vlines(nu_lines, 1e-32, S_lines, lw=0.5)
-plt.yscale("log")
-plt.xlim(570, 770)
-plt.ylim(1e-32, S_lines.max() * 3)
-plt.xlabel("Wavenumber (cm$^{-1}$)")
-plt.ylabel("Line strength S (cm$^{-1}$/(molecule cm$^{-2}$))")
-plt.show()
-
 #Lorentzian
 
-nu_grid = np.linspace(450, 850, 40000, endpoint=False)    # step 0.005 cm^-1
+nu_grid = np.linspace(450, 850, 40000, endpoint=False)    # step 0.01 cm^-1
 
 def cross_section(nu_grid, p=1.0):
     #making a grid
@@ -162,25 +154,28 @@ def cross_section(nu_grid, p=1.0):
 
 sigma_1 = cross_section(nu_grid, 1)
 
-fig, ax = plt.subplots(1, 2, figsize=(11, 4))
-ax[0].semilogy(nu_grid, sigma_1)
-ax[0].set_xlabel("Wavenumber (cm$^{-1}$)")
-ax[0].set_ylabel("Cross-section (cm$^2$)")
-
-ax[1].semilogy(nu_grid, sigma_1, label="1 atm")
-ax[1].set_xlim(680, 695)
-ax[1].set_xlabel("Wavenumber (cm$^{-1}$)")
-ax[1].legend()
-
-plt.tight_layout()
-plt.show()
-
 #CHANGE TO FREQUENCY
 
 c_cm = 2.99792458e10             # speed of light in cm/s
 
 def to_THz(nu_cm):
     return nu_cm * c_cm / 1e12   # cm^-1 -> THz
+
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+
+ax[0].semilogy(to_THz(nu_grid), sigma_1)
+ax[0].set_xlabel("Frequency (THz)")
+ax[0].set_ylabel("Cross-section (cm$^2$)")
+
+ax[1].semilogy(to_THz(nu_grid), sigma_1, label="Pressure Broadening")
+ax[1].set_xlim(to_THz(680), to_THz(695))
+ax[1].set_xlabel("Frequency (THz)")
+ax[1].legend()
+
+plt.tight_layout()
+plt.show()
+
+
 
 # average over 2 cm^-1 bins (400 grid points each) so we fit the envelope, not single lines
 sigma_bin = sigma_1.reshape(-1, 400).mean(axis=1)
@@ -196,16 +191,81 @@ m_l, b_l = np.polyfit(nu_bin[left], np.log(sigma_bin[left]), 1)
 
 plt.figure(figsize=(10, 5))
 
-
-plt.semilogy(to_THz(nu_grid), sigma_1, color="tab:red", lw=0.5, alpha=0.6, label="1 atm")
-plt.semilogy(to_THz(nu_bin[right]), np.exp(b_r + m_r * nu_bin[right]), color="orange", lw=2, label="fit, high side")
-plt.semilogy(to_THz(nu_bin[left]), np.exp(b_l + m_l * nu_bin[left]), color="blue", lw=2, label="fit, low side")
-plt.semilogy(to_THz(nu_lines), S_lines, ".", color="indigo", ms=3, label="HITRAN S")
+plt.semilogy(to_THz(nu_grid), sigma_1, color="tab:red", lw=0.5, alpha=0.6, label="Pressure Broadening")
+plt.semilogy(to_THz(nu_lines), S_lines, ".", color="black", ms=3, label="HITRAN Data")
 
 plt.xlim(to_THz(570), to_THz(770))     # about 17.1 to 23.1 THz
 plt.ylim(1e-22, 1e-17)
 plt.xlabel("Frequency (THz)")
-plt.ylabel("Cross-section (cm$^2$)")
-plt.legend(fontsize=8)
-plt.grid(alpha=0.3)
+plt.ylabel("Cross-section of Absorption (cm$^2$)")
+plt.legend(fontsize=12)
+plt.show()
+
+#NUMBER 3
+
+g = 9.81                       # m/s^2
+m_air = 28.97 * 1.66054e-27    # mass of ONE air molecule (kg)
+P0 = 101325.0                  # surface pressure (Pa)
+Gamma = 0.00649                # lapse rate (K/m)
+eta = 0.75
+
+f_band = c_cm * nu_grid        # Hz (c_cm is cm/s because nu_grid is in cm^-1
+
+def outgoing_band(Ts, ppm, sigma):
+    N0 = ppm * 1e-6 * P0 / (kB * Ts)        
+    z0 = kB * Ts / (m_air * g)              
+    Ttrop = Ts - Gamma * z0 * np.log(1 + eta)
+
+    OD = N0 * (sigma * 1e-4) * z0          
+
+    B_s = spec_rad_F(f_band, Ts)
+    B_t = spec_rad_F(f_band, Ttrop)
+    return B_s * np.exp(-OD) + B_t * (1 - np.exp(-OD))
+
+def emitted_power_co2(Ts, ppm, sigma):
+    full = np.pi * np.trapezoid(spec_rad_F(f, Ts), f)                      # whole spectrum, no CO2
+    band_plain = np.pi * np.trapezoid(spec_rad_F(f_band, Ts), f_band)      # band, no CO2
+    band_co2 = np.pi * np.trapezoid(outgoing_band(Ts, ppm, sigma), f_band) # band, with CO2
+    return full - band_plain + band_co2
+
+def find_T(ppm, sigma):
+    T = 200.0
+    step = 10.0
+    for i in range(500):
+        diff = absorbed - emitted_power_co2(T, ppm, sigma)
+        if abs(diff) < 1e-6:
+            break
+        if diff > 0:
+            T = T + step
+        else:
+            T = T - step
+            step = step / 2
+    return T
+
+T_0 = find_T(0, sigma_1)
+T_350 = find_T(350, sigma_1)
+T_426_10 = find_T(426.10, sigma_1)
+
+print("0 ppm:", T_0)
+print("350 ppm:", T_350)
+print("426.10 ppm:", T_426_10)
+print("350 to 426.10 ppm rise:", T_426_10 - T_350)
+
+plt.figure(figsize=(10, 5))
+plt.plot(f_band / 1e12, np.pi * spec_rad_F(f_band, T_350), "k--", lw=1, label="No CO$_2$")
+plt.plot(f_band / 1e12, np.pi * outgoing_band(T_350, 426.10, sigma_1), color="tab:red", lw=1, label="426.10 ppm")
+plt.xlim(13.5, 25.5)
+plt.xlabel("Frequency (THz)")
+plt.ylabel("Outgoing irradiance (W m$^{-2}$ Hz$^{-1}$)")
+plt.legend(fontsize=12)
+plt.show()
+
+dI = np.pi * (outgoing_band(T_350, 450, sigma_1) - outgoing_band(T_350, 350, sigma_1))
+
+plt.figure(figsize=(10, 4))
+plt.plot(f_band / 1e12, dI, lw=0.8)
+plt.axhline(0, color="k", lw=0.5)
+plt.xlim(13.5, 25.5)
+plt.xlabel("Frequency (THz)")
+plt.ylabel("Change in outgoing irradiance (W m$^{-2}$ Hz$^{-1}$)")
 plt.show()
