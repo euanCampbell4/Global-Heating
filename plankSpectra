@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-plt.rcParams["axes.labelsize"] = 12
+plt.rcParams["axes.labelsize"] = 15
 
 # Constants
 
@@ -214,7 +214,7 @@ f_band = c_cm * nu_grid        # Hz (c_cm is cm/s because nu_grid is in cm^-1
 def outgoing_band(Ts, ppm, sigma):
     N0 = ppm * 1e-6 * P0 / (kB * Ts)        
     z0 = kB * Ts / (m_air * g)              
-    Ttrop = Ts - Gamma * z0 * np.log(1 + eta)
+    Ttrop = Ts + Gamma * z0 * np.log(1 - eta)
 
     OD = N0 * (sigma * 1e-4) * z0          
 
@@ -243,24 +243,24 @@ def find_T(ppm, sigma):
     return T
 
 T_0 = find_T(0, sigma_1)
-T_350 = find_T(350, sigma_1)
+T_280 = find_T(280, sigma_1)
 T_426_10 = find_T(426.10, sigma_1)
 
 print("0 ppm:", T_0)
-print("350 ppm:", T_350)
+print("280 ppm:", T_280)
 print("426.10 ppm:", T_426_10)
-print("350 to 426.10 ppm rise:", T_426_10 - T_350)
+print("280 to 426.10 ppm rise:", T_426_10 - T_280)
 
 plt.figure(figsize=(10, 5))
-plt.plot(f_band / 1e12, np.pi * spec_rad_F(f_band, T_350), "k--", lw=1, label="No CO$_2$")
-plt.plot(f_band / 1e12, np.pi * outgoing_band(T_350, 426.10, sigma_1), color="tab:red", lw=1, label="426.10 ppm")
+plt.plot(f_band / 1e12, np.pi * spec_rad_F(f_band, T_280), "k--", lw=1, label="No CO$_2$")
+plt.plot(f_band / 1e12, np.pi * outgoing_band(T_280, 426.10, sigma_1), color="tab:red", lw=1, label="426.10 ppm")
 plt.xlim(13.5, 25.5)
 plt.xlabel("Frequency (THz)")
 plt.ylabel("Outgoing irradiance (W m$^{-2}$ Hz$^{-1}$)")
 plt.legend(fontsize=12)
 plt.show()
 
-dI = np.pi * (outgoing_band(T_350, 450, sigma_1) - outgoing_band(T_350, 350, sigma_1))
+dI = np.pi * (outgoing_band(T_280, 426.10, sigma_1) - outgoing_band(T_280, 280, sigma_1))
 
 plt.figure(figsize=(10, 4))
 plt.plot(f_band / 1e12, dI, lw=0.8)
@@ -269,3 +269,5 @@ plt.xlim(13.5, 25.5)
 plt.xlabel("Frequency (THz)")
 plt.ylabel("Change in outgoing irradiance (W m$^{-2}$ Hz$^{-1}$)")
 plt.show()
+print(T_0, T_280, T_426_10)
+print(emitted_power_co2(254.86, 0, sigma_1))   # should be about 239
