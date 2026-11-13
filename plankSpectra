@@ -203,13 +203,13 @@ plt.show()
 
 #NUMBER 3
 
-g = 9.81                       # m/s^2
-m_air = 28.97 * 1.66054e-27    # mass of ONE air molecule (kg)
-P0 = 101325.0                  # surface pressure (Pa)
-Gamma = 0.00649                # lapse rate (K/m)
+g = 9.81                       
+m_air = 28.97 * 1.66054e-27    
+P0 = 101325.0                 
+Gamma = 0.00649           
 eta = 0.75
 
-f_band = c_cm * nu_grid        # Hz (c_cm is cm/s because nu_grid is in cm^-1
+f_band = c_cm * nu_grid       
 
 def outgoing_band(Ts, ppm, sigma):
     N0 = ppm * 1e-6 * P0 / (kB * Ts)        
@@ -223,9 +223,9 @@ def outgoing_band(Ts, ppm, sigma):
     return B_s * np.exp(-OD) + B_t * (1 - np.exp(-OD))
 
 def emitted_power_co2(Ts, ppm, sigma):
-    full = np.pi * np.trapezoid(spec_rad_F(f, Ts), f)                      # whole spectrum, no CO2
-    band_plain = np.pi * np.trapezoid(spec_rad_F(f_band, Ts), f_band)      # band, no CO2
-    band_co2 = np.pi * np.trapezoid(outgoing_band(Ts, ppm, sigma), f_band) # band, with CO2
+    full = np.pi * np.trapezoid(spec_rad_F(f, Ts), f)                     
+    band_plain = np.pi * np.trapezoid(spec_rad_F(f_band, Ts), f_band)      # CO2
+    band_co2 = np.pi * np.trapezoid(outgoing_band(Ts, ppm, sigma), f_band) # with CO2
     return full - band_plain + band_co2
 
 def find_T(ppm, sigma):
@@ -270,4 +270,4 @@ plt.xlabel("Frequency (THz)")
 plt.ylabel("Change in outgoing irradiance (W m$^{-2}$ Hz$^{-1}$)")
 plt.show()
 print(T_0, T_280, T_426_10)
-print(emitted_power_co2(254.86, 0, sigma_1))   # should be about 239
+print(emitted_power_co2(254.86, 0, sigma_1)) 
