@@ -174,18 +174,48 @@ plt.tight_layout()
 plt.show()
 
 
+# Step 1: average sigma over chunks of the spectrum (bins)
+# each bin is 400 grid points, which is 400 x 0.01 = 4 cm^-1 wide
+points_per_bin = 400
+number_of_bins = len(sigma_1) // points_per_bin
 
-# average over 2 cm^-1 bins (400 grid points each) so we fit the envelope, not single lines
-sigma_bin = sigma_1.reshape(-1, 400).mean(axis=1)
-nu_bin = nu_grid.reshape(-1, 400).mean(axis=1)
+nu_bin = []
+sigma_bin = []
 
-nu_c = 667.4
+for i in range(number_of_bins):
+    start = i * points_per_bin
+    end = start + points_per_bin
+    nu_bin.append(np.mean(nu_grid[start:end]))        # middle of the bin
+    sigma_bin.append(np.mean(sigma_1[start:end]))     # average sigma in the bin
 
-right = (nu_bin > nu_c + 10) & (nu_bin < 750)
-left = (nu_bin < nu_c - 10) & (nu_bin > 590)
+# Step 2: pick which bins to fit on each side of the band centre
+nu_c = 667.4          # band centre in cm^-1
 
-m_r, b_r = np.polyfit(nu_bin[right], np.log(sigma_bin[right]), 1)
-m_l, b_l = np.polyfit(nu_bin[left], np.log(sigma_bin[left]), 1)
+nu_right = []
+ln_sigma_right = []
+nu_left = []
+ln_sigma_left = []
+
+for i in range(len(nu_bin)):
+    if nu_bin[i] > nu_c + 10 and nu_bin[i] < 750:
+        nu_right.append(nu_bin[i])
+        ln_sigma_right.append(np.log(sigma_bin[i]))
+
+    if nu_bin[i] < nu_c - 10 and nu_bin[i] > 590:
+        nu_left.append(nu_bin[i])
+        ln_sigma_left.append(np.log(sigma_bin[i]))
+
+
+m_r, b_r = np.polyfit(nu_right, ln_sigma_right, 1)
+m_l, b_l = np.polyfit(nu_left, ln_sigma_left, 1)
+
+fit_right = []
+for x in nu_right:
+    fit_right.append(np.exp(b_r + m_r * x))
+
+fit_left = []
+for x in nu_left:
+    fit_left.append(np.exp(b_l + m_l * x))
 
 plt.figure(figsize=(10, 5))
 
