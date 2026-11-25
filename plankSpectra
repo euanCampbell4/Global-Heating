@@ -91,7 +91,7 @@ I_e490_nu = e490["irradiance"].values * 1e6 * lam_e**2 / c  # W m^-2 Hz^-1
 
 #Plots 4 plots tables
 
-fig, ax = plt.subplots(2, 2, figsize=(12, 8))
+fig, ax = plt.subplots(2, 2, figsize=(20, 8))
 
 for row in range(2):
     a = ax[row, 0]
@@ -122,7 +122,7 @@ for row in range(2):
     a.legend(fontsize=10)
     b.legend(fontsize=10)
 
-plt.tight_layout(rect=[0, 0.12, 1, 1]) 
+plt.tight_layout(rect=[0.08, 0.18, 0.98, 0.96], w_pad=3, h_pad=3)
 plt.figtext(0.5, 0.11, "Sun and Earth Planck spectra with E490 data.",  ha="center")
 plt.figtext(0.5, 0.06," The incoming Planck prediction is " + str(S_planck) + ". The E490 is " + str(S_e490) + ". The outgoing Planck prediction is " + str(S_out) , ha="center")
 plt.figtext(0.5, 0.01, "The predicted temperature is " + str(T_earth),  ha="center")
@@ -243,7 +243,7 @@ def outgoing_band(Ts, ppm, sigma):
     N0 = ppm * 1e-6 * P0 / (kB * Ts)        
     z0 = kB * Ts / (m_air * g)              
     Tstrat = Ts + Gamma * z0 * np.log(1 - eta)
-
+    print(Tstrat)
     OD = N0 * (sigma * 1e-4) * z0          
 
     B_s = spec_rad_F(f_band, Ts)
